@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node index.ts",
-    "minify": "svgo --config='{\"full\":true}' --enable=convertPathData -f output -r -p 1",
+    "minify": "svgo --config='{\"full\":true}' --enable=convertPathData -f output -r -p 1 --multipass",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

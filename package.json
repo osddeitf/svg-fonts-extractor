@@ -1,0 +1,25 @@
+{
+  "name": "sandbox",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node index.ts",
+    "minify": "svgo --config='{\"full\":true}' --enable=convertPathData -f output -r -p 1",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "image-size": "^0.8.3",
+    "lodash": "^4.17.15",
+    "svg-path-parser": "^1.1.0",
+    "xml2js": "^0.4.23"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.155",
+    "@types/node": "^12.12.47",
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.5"
+  }
+}

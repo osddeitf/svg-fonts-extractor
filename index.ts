@@ -2,13 +2,14 @@ import * as _ from 'lodash'
 import * as fs from 'fs'
 import * as path from 'path'
 import { Font } from './types.d'
-const parse = require('xml2js').parseStringPromise
-const pathParse = require('svg-path-parser').parseSVG
+import { parseStringPromise as parse } from 'xml2js'
+import { parseSVG as pathParse } from 'svg-path-parser'
 
 const svg = function(d, w, h) {
+  const path = d? `<path d="${d}" />`: ''
   return (
 `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">
-<path d="${d}" />
+${path}
 </svg>
 `)
 }
@@ -45,21 +46,28 @@ function flipX(path, h) {
     .map(command => command.join(' '))
 }
 
-async function read(xml) {
-  const tree = await parse(xml)
-  const $font = tree.svg.defs[0].font[0]
+async function read(filename: string) {
+  try {
+    const svg = fs.readFileSync(filename)
+    const tree = await parse(svg)
+    const $font = tree.svg.defs[0].font[0]
 
-  const font: Font = {
-    ...$font.$,
-    "font-face": $font['font-face'][0].$,
-    glyphs: $font.glyph.map(x => x.$)
+    const font: Font = {
+      ...$font.$,
+      "font-face": $font['font-face'][0].$,
+      glyphs: $font.glyph.map(x => x.$)
+    }
+
+    return font
   }
-
-  return font
+  catch (e) {
+    throw Error("Invalid file")
+  }
 }
 
 async function batch(filename) {
-  const font = await read(fs.readFileSync(filename))
+  const font = await read(filename).catch(e => console.log(e.message))
+  if (!font) return
 
   // const [min_x, min_y] = font["font-face"].bbox.split(' ').map(x => Number(x))
   // const dx = -Math.round(min_x)
@@ -68,17 +76,22 @@ async function batch(filename) {
   const dy = -Number(font["font-face"].descent)
   const h = Number(font["font-face"].ascent) - Number(font["font-face"].descent)
 
-  const dir = path.join('output', path.basename(filename, path.extname(filename)))
+  const dir = path.join('output', font.id)
   try { fs.mkdirSync(dir, { recursive: true }) } catch {}
   
   for (const glyph of font.glyphs) {
-    const p = pathParse(glyph.d)
-    const _ = offset(p, dx, dy)
-    const d = flipX(_, h).join(' ')
+    const f = path.join(dir, glyph["glyph-name"] + '.svg')
     const w = glyph["horiz-adv-x"] || font["horiz-adv-x"]
 
-    const f = path.join(dir, glyph["glyph-name"] + '.svg')
-    fs.writeFileSync(f, svg(d, w, h))
+    if (!glyph.d) {
+      fs.writeFileSync(f, svg(glyph.d, w, h))  
+    }
+    else {
+      const p = pathParse(glyph.d)
+      const _ = offset(p, dx, dy)
+      const d = flipX(_, h).join(' ')
+      fs.writeFileSync(f, svg(d, w, h))
+    }
   }
 }
   

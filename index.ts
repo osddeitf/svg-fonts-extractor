@@ -68,7 +68,7 @@ async function batch(filename) {
   const dy = -Number(font["font-face"].descent)
   const h = Number(font["font-face"].ascent) - Number(font["font-face"].descent)
 
-  const dir = path.join('output', font.id)
+  const dir = path.join('output', path.basename(filename, path.extname(filename)))
   try { fs.mkdirSync(dir, { recursive: true }) } catch {}
   
   for (const glyph of font.glyphs) {
@@ -81,15 +81,14 @@ async function batch(filename) {
     fs.writeFileSync(f, svg(d, w, h))
   }
 }
-
-const files = [
-  'fa-brands-400.svg',
-  'fa-light-300.svg',
-  'fa-regular-400.svg',
-  'fa-solid-900.svg',
-];
-
+  
 (async () => {
+  const files = process.argv.slice(2)
+  if (files.length === 0) {
+    console.error("No input file")
+    process.exit(1)
+  }
+
   const pros = files.map(x => batch(x))
   await Promise.all(pros)
 })()
